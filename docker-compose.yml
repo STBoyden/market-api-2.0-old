@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+    api:
+        build: .
+        ports:
+            - "8000:8000"
+    db:
+        image: "postgres:13-alpine"
+        environment:
+            POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+        ports:
+            - "1024:1024"
