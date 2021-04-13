@@ -14,6 +14,12 @@ There are a few prerequisites that need to be met before the following commands 
 
 Firstly, the following environment variable(s) need to be defined for the process to work:
 - `POSTGRES_PASSWORD`
+- `DATABASE_URL`
+
+The following environment variables are optional to define:
+
+- `HOST` (defaults to `0.0.0.0` if not specified)
+- `PORT` (defaults to `8000` if not specified)
 
 The Docker commands should be ran as `root` (denoted by the `#` at the beginning of the commands) through `sudo`/`doas` or just by being the `root` user.
 
