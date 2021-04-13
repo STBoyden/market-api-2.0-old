@@ -24,10 +24,10 @@ The following environment variables are optional to define:
 The Docker commands should be ran as `root` (denoted by the `#` at the beginning of the commands) through `sudo`/`doas` or just by being the `root` user.
 
 ### Running just the API
-`# docker-compose run api`
+`# docker-compose run api -d`
 
 ### Running just the database
-`# docker-compose run db`
+`# docker-compose run db -d`
 
 ### Running both
-`# docker-compose up`
+`# docker-compose up -d`
