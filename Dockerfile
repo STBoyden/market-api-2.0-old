@@ -1,11 +1,15 @@
-FROM rust:alpine3.12
+FROM rust:alpine3.12 AS builder
 MAINTAINER sam@stboyden.com
 
 WORKDIR /usr/src/market-api
 COPY . .
-RUN apk add --no-cache musl-dev
-RUN apk add openssl-dev
+RUN apk add --no-cache musl-dev openssl-dev mariadb-dev
 RUN rustup toolchain install nightly
 RUN cargo +nightly install --path .
-CMD ["echo", "Running market-api..."]
+
+FROM alpine:latest
+COPY --from=builder /usr/local/cargo/bin/market-api /usr/local/bin/market-api
+WORKDIR /usr/src/market-api
+COPY .env .
+RUN env
 CMD ["market-api"]
