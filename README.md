@@ -4,7 +4,6 @@ A rewrite of the Minecraft market API available [here](https://github.com/Mineso
 This rewrite makes use of Docker and `docker-compose` to create an easily deployable database and API (done with `sqlx`).
 
 ## Changes from the previous version
-- Rocket-rs has been replaced by Actix Web
 - The API now instead communicates with a database rather than reading and writing to a JSON file in a data directory.
 
 ## How to run/deploy

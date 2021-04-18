@@ -1,5 +1,5 @@
 use crate::models::Item;
-use diesel::prelude::*;
+use rocket_contrib::databases::diesel::prelude::*;
 
 pub fn get_all_items(
     connection: &MysqlConnection,

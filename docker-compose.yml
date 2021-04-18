@@ -18,7 +18,6 @@ services:
         image: "mysql:8"
         container_name: "market-database"
         command: --default-authentication-plugin=mysql_native_password
-        network_mode: "host"
         restart: "always"
         volumes:
             - db:/var/lib/mysql/
@@ -28,6 +27,14 @@ services:
             MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
             MYSQL_DATABASE: "market"
             MYSQL_INITDB_SKIP_TZINFO: "true"
+
+    admin-panel:
+        image: "adminer"
+        container_name: "market-database-admin-panel"
+        ports:
+            - "8080:8080"
+        depends_on:
+            - db
 
 volumes:
     db:
