@@ -6,17 +6,29 @@ services:
         container_name: "market-api"
         ports:
             - "8000:8000"
+        environment:
+            DATABASE_HOST: "db"
+            DATABASE_PORT: "3306"
+            MYSQL_USER: "${MYSQL_USER}"
+            MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
         depends_on:
             - db
+
     db:
-        image: "postgres:13-alpine"
+        image: "mysql:8"
         container_name: "market-database"
+        command: --default-authentication-plugin=mysql_native_password
+        network_mode: "host"
         restart: "always"
         volumes:
-            - db:/var/lib/postgresql/data
+            - db:/var/lib/mysql/
         environment:
-            POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-            POSTGRES_DB: "market"
+            MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+            MYSQL_USER: "${MYSQL_USER}"
+            MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+            MYSQL_DATABASE: "market"
+            MYSQL_INITDB_SKIP_TZINFO: "true"
 
 volumes:
     db:
+
