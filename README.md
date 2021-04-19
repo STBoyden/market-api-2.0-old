@@ -1,7 +1,7 @@
 # Market API version 2.0
 A rewrite of the Minecraft market API available [here](https://github.com/MinesoftCC/market-api). 
 
-This rewrite makes use of Docker and `docker-compose` to create an easily deployable database and API (done with `sqlx`).
+This rewrite makes use of Docker and `docker-compose` to create an easily deployable database and API.
 
 ## Changes from the previous version
 - The API now instead communicates with a database rather than reading and writing to a JSON file in a data directory.
