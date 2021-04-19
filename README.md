@@ -11,7 +11,7 @@ There are a few prerequisites that need to be met before the following commands 
 
 Firstly, the following environment variable(s) need to be defined for the process to work:
 - `DATABASE_HOST`
-- `DATABAST_PORT`
+- `DATABASE_PORT`
 - `MYSQL_ROOT_PASSWORD`
 - `MYSQL_USER`
 - `MYSQL_PASSWORD`
