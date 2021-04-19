@@ -1,3 +1,5 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -6,6 +8,10 @@ extern crate diesel;
 extern crate serde;
 #[macro_use]
 extern crate diesel_migrations;
+#[macro_use]
+extern crate rocket;
+#[macro_use]
+extern crate rocket_contrib;
 
 mod actions;
 mod models;
@@ -13,44 +19,59 @@ mod routes;
 mod schema;
 
 use {
-    actix_web::{web, App, HttpResponse, HttpServer, Responder},
     anyhow::Result,
-    diesel::{
-        mysql::MysqlConnection,
-        r2d2::{self, ConnectionManager},
-    },
     dotenv::dotenv,
-    listenfd::ListenFd,
-    routes::*,
-    std::env,
+    rocket::{
+        config::{Config, Environment, Value},
+        http::ContentType,
+        response::Response,
+    },
+    rocket_contrib::databases::diesel::{
+        r2d2::{self, ConnectionManager},
+        MysqlConnection,
+    },
+    std::{collections::HashMap, env, io::Cursor},
 };
 
-pub type DbPool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
+pub type DbConnection = MysqlConnection;
 
 embed_migrations!();
 
-async fn index() -> impl Responder {
-    HttpResponse::Ok().body(
+#[database("db")]
+pub struct Database(DbConnection);
+
+#[get("/")]
+fn index<'a>() -> Response<'a> {
+    let mut response = Response::new();
+    response.set_header(ContentType::HTML);
+    response.set_sized_body(Cursor::new(
         r#"
-        <h1>market-api index page</h1>
+        <h1>Market API</h1>
         Routes:
         <ul>
             <li>GET / -> shows this help page</li>
-            <li>GET /items -> gets all items in JSON format</li>
+            <li>GET /items -> gets all items and returns in JSON</li>
+            <li>GET /item/{item_id} -> gets the item with specified item_id and returns in JSON</li>
         </ul>
     "#,
-    )
+    ));
+
+    response
 }
 
-#[actix_web::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     dotenv().ok();
 
     let mut logger_build = env_logger::Builder::from_default_env();
 
+    #[cfg(debug_assertions)]
     logger_build.filter_level(log::LevelFilter::Debug).init();
 
-    let mut listenfd = ListenFd::from_env();
+    #[cfg(not(debug_assertions))]
+    logger_build
+        .filter_module("market_api", log::LevelFilter::Debug)
+        .filter_module("rocket", log::LevelFilter::Info)
+        .init();
 
     let database_host =
         env::var("DATABASE_HOST").expect("DATABASE_HOST environment variable not set");
@@ -62,15 +83,20 @@ async fn main() -> Result<()> {
         env::var("MYSQL_USER").expect("MYSQL_USER environment variable not set");
     let database_password = env::var("MYSQL_ROOT_PASSWORD")
         .expect("MYSQL_ROOT_PASSWORD environment variable not set");
+    let secret_key =
+        env::var("SECRET_KEY").expect("Rocket's SECRET_KEY environment variable not set");
     let database_url = format!(
         "mysql://{}:{}@{}:{}/market",
         database_user, database_password, database_host, database_port
     );
 
     let host = env::var("HOST").unwrap_or(String::from("0.0.0.0"));
-    let port = env::var("PORT").unwrap_or(String::from("8000"));
+    let port = env::var("PORT")
+        .unwrap_or(String::from("8000"))
+        .parse::<u16>()
+        .expect("Could not parse supplied port as a valid u16");
 
-    let manager = ConnectionManager::<MysqlConnection>::new(database_url);
+    let manager = ConnectionManager::<MysqlConnection>::new(&database_url);
     let pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create database pool");
@@ -80,22 +106,32 @@ async fn main() -> Result<()> {
     )
     .expect("Could not run diesel migrations");
 
-    let mut server = HttpServer::new(move || {
-        App::new()
-            .data(pool.clone())
-            .route("/", web::get().to(index))
-            .route("/items", web::get().to(get_all_items))
-            .route("/item/{item_id}", web::get().to(get_item_by_id))
-    });
+    let mut databases_config = HashMap::new();
+    let mut databases = HashMap::new();
 
-    server = match listenfd.take_tcp_listener(0)? {
-        Some(listener) => server.listen(listener)?,
-        None => server.bind(format!("{}:{}", host, port))?,
-    };
+    databases_config.insert("url", Value::from(database_url));
+    databases.insert("db", Value::from(databases_config));
 
-    info!("Server is starting...");
-    info!("Server (HOST: {}, PORT: {})", host, port);
-    server.run().await?;
+    #[cfg(debug_assertions)]
+    let environment = Environment::Development;
+    #[cfg(not(debug_assertions))]
+    let environment = Environment::Production;
+
+    let config = Config::build(environment)
+        .extra("databases", databases)
+        .port(port)
+        .address(host)
+        .secret_key(secret_key)
+        .finalize()
+        .expect("Invalid config");
+
+    rocket::custom(config)
+        .attach(Database::fairing())
+        .mount(
+            "/",
+            routes![index, routes::get_all_items, routes::get_item_by_id],
+        )
+        .launch();
 
     Ok(())
 }

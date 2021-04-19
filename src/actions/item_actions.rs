@@ -1,5 +1,5 @@
 use crate::models::Item;
-use diesel::prelude::*;
+use rocket_contrib::databases::diesel::prelude::*;
 
 pub fn get_all_items(
     connection: &MysqlConnection,
@@ -26,4 +26,18 @@ pub fn get_item_by_id(
         .optional()?;
 
     Ok(item)
+}
+
+pub fn add_item(
+    connection: &MysqlConnection,
+    item: Item,
+) -> Result<Option<usize>, diesel::result::Error> {
+    use crate::schema::items::dsl::*;
+
+    let rows_affected = diesel::insert_into(items)
+        .values(&item)
+        .execute(connection)
+        .optional()?;
+
+    Ok(rows_affected)
 }

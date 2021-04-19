@@ -2,6 +2,7 @@ use crate::schema::items;
 use chrono::NaiveDateTime;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable)]
+#[table_name = "items"]
 pub struct Item {
     pub item_id: i32,
     pub name: String,
