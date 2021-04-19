@@ -27,3 +27,17 @@ pub fn get_item_by_id(
 
     Ok(item)
 }
+
+pub fn add_item(
+    connection: &MysqlConnection,
+    item: Item,
+) -> Result<Option<usize>, diesel::result::Error> {
+    use crate::schema::items::dsl::*;
+
+    let rows_affected = diesel::insert_into(items)
+        .values(&item)
+        .execute(connection)
+        .optional()?;
+
+    Ok(rows_affected)
+}

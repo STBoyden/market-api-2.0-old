@@ -21,12 +21,16 @@ mod schema;
 use {
     anyhow::Result,
     dotenv::dotenv,
-    rocket::config::{Config, Environment, Value},
+    rocket::{
+        config::{Config, Environment, Value},
+        http::ContentType,
+        response::Response,
+    },
     rocket_contrib::databases::diesel::{
         r2d2::{self, ConnectionManager},
         MysqlConnection,
     },
-    std::{collections::HashMap, env},
+    std::{collections::HashMap, env, io::Cursor},
 };
 
 pub type DbConnection = MysqlConnection;
@@ -37,15 +41,22 @@ embed_migrations!();
 pub struct Database(DbConnection);
 
 #[get("/")]
-fn index() -> &'static str {
-    r#"
+fn index<'a>() -> Response<'a> {
+    let mut response = Response::new();
+    response.set_header(ContentType::HTML);
+    response.set_sized_body(Cursor::new(
+        r#"
         <h1>Market API</h1>
         Routes:
         <ul>
             <li>GET / -> shows this help page</li>
-            <li>GET /items -> gets all items in JSON format</li>
+            <li>GET /items -> gets all items and returns in JSON</li>
+            <li>GET /item/{item_id} -> gets the item with specified item_id and returns in JSON</li>
         </ul>
-    "#
+    "#,
+    ));
+
+    response
 }
 
 fn main() -> Result<()> {
@@ -59,6 +70,7 @@ fn main() -> Result<()> {
     #[cfg(not(debug_assertions))]
     logger_build
         .filter_module("market_api", log::LevelFilter::Debug)
+        .filter_module("rocket", log::LevelFilter::Info)
         .init();
 
     let database_host =
@@ -71,6 +83,8 @@ fn main() -> Result<()> {
         env::var("MYSQL_USER").expect("MYSQL_USER environment variable not set");
     let database_password = env::var("MYSQL_ROOT_PASSWORD")
         .expect("MYSQL_ROOT_PASSWORD environment variable not set");
+    let secret_key =
+        env::var("SECRET_KEY").expect("Rocket's SECRET_KEY environment variable not set");
     let database_url = format!(
         "mysql://{}:{}@{}:{}/market",
         database_user, database_password, database_host, database_port
@@ -107,12 +121,16 @@ fn main() -> Result<()> {
         .extra("databases", databases)
         .port(port)
         .address(host)
+        .secret_key(secret_key)
         .finalize()
         .expect("Invalid config");
 
     rocket::custom(config)
         .attach(Database::fairing())
-        .mount("/", routes![index, routes::get_all_items,])
+        .mount(
+            "/",
+            routes![index, routes::get_all_items, routes::get_item_by_id],
+        )
         .launch();
 
     Ok(())

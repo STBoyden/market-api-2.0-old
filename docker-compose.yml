@@ -17,6 +17,8 @@ services:
     db:
         image: "mysql:8"
         container_name: "market-database"
+        ports:
+            - "3306:3306"
         command: --default-authentication-plugin=mysql_native_password
         restart: "always"
         volumes:
