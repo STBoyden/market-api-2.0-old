@@ -16,12 +16,12 @@ pub fn get_all_items(
 
 pub fn get_item_by_id(
     connection: &MysqlConnection,
-    id: i32,
+    record_id: i32,
 ) -> Result<Option<Item>, diesel::result::Error> {
     use crate::schema::items::dsl::*;
 
     let item = items
-        .filter(item_id.eq(id))
+        .filter(id.eq(record_id))
         .first::<Item>(connection)
         .optional()?;
 
@@ -41,3 +41,4 @@ pub fn add_item(
 
     Ok(rows_affected)
 }
+
