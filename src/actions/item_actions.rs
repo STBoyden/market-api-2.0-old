@@ -42,3 +42,15 @@ pub fn add_item(
     Ok(rows_affected)
 }
 
+pub fn remove_item(
+    connection: &MysqlConnection,
+    record_id: i32,
+) -> Result<Option<usize>, diesel::result::Error> {
+    use crate::schema::items::dsl::*;
+
+    let rows_affected = diesel::delete(items.filter(id.eq(record_id)))
+        .execute(connection)
+        .optional()?;
+
+    Ok(rows_affected)
+}
