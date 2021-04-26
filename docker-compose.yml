@@ -31,6 +31,8 @@ services:
             MYSQL_INITDB_SKIP_TZINFO: "true"
 
     admin-panel:
+        profiles:
+            - debug
         image: "adminer"
         container_name: "market-database-admin-panel"
         ports:
