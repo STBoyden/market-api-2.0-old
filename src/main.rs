@@ -17,21 +17,16 @@ mod actions;
 mod models;
 mod routes;
 mod schema;
+mod status_responders;
 
-use {
-    anyhow::Result,
-    dotenv::dotenv,
-    rocket::{
-        config::{Config, Environment, Value},
-        http::ContentType,
-        response::Response,
-    },
-    rocket_contrib::databases::diesel::{
-        r2d2::{self, ConnectionManager},
-        MysqlConnection,
-    },
-    std::{collections::HashMap, env, io::Cursor},
+use anyhow::Result;
+use dotenv::dotenv;
+use rocket::config::{Config, Environment, Value};
+use rocket_contrib::databases::diesel::{
+    r2d2::{self, ConnectionManager},
+    MysqlConnection,
 };
+use std::{collections::HashMap, env};
 
 pub type DbConnection = MysqlConnection;
 
@@ -40,37 +35,18 @@ embed_migrations!();
 #[database("db")]
 pub struct Database(DbConnection);
 
-#[get("/")]
-fn index<'a>() -> Response<'a> {
-    let mut response = Response::new();
-    response.set_header(ContentType::HTML);
-    response.set_sized_body(Cursor::new(
-        r#"
-        <h1>Market API</h1>
-        Routes:
-        <ul>
-            <li>GET / -> shows this help page</li>
-            <li>GET /items -> gets all items and returns in JSON</li>
-            <li>GET /item/{item_id} -> gets the item with specified item_id and returns in JSON</li>
-        </ul>
-    "#,
-    ));
-
-    response
-}
-
 fn main() -> Result<()> {
     dotenv().ok();
 
     let mut logger_build = env_logger::Builder::from_default_env();
 
     #[cfg(debug_assertions)]
-    logger_build.filter_level(log::LevelFilter::Debug).init();
+    logger_build.filter_level(log::LevelFilter::Trace).init();
 
     #[cfg(not(debug_assertions))]
     logger_build
         .filter_module("market_api", log::LevelFilter::Debug)
-        .filter_module("rocket", log::LevelFilter::Info)
+        .filter_module("rocket", log::LevelFilter::Debug)
         .init();
 
     let database_host =
@@ -129,8 +105,20 @@ fn main() -> Result<()> {
         .attach(Database::fairing())
         .mount(
             "/",
-            routes![index, routes::get_all_items, routes::get_item_by_id],
+            routes![
+                // GET
+                routes::index,
+                routes::get_all_items,
+                routes::get_item_by_id,
+                // POST
+                routes::add_item // DELETE
+            ],
         )
+        .register(catchers![
+            status_responders::bad_request,
+            status_responders::internal_server_error,
+            status_responders::not_found,
+        ])
         .launch();
 
     Ok(())
