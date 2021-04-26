@@ -1,9 +1,11 @@
 -- Your SQL goes here
 CREATE TABLE items (
-    item_id INT PRIMARY KEY,
+    id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    item_id VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    picture VARCHAR(255),
     price INT NOT NULL,
     stock INT NOT NULL,
     owner VARCHAR(255) NOT NULL,
-    posted_timestamp DATETIME NOT NULL
+    posted_timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 )

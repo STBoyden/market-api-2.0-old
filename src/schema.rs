@@ -1,7 +1,9 @@
 table! {
-    items (item_id) {
-        item_id -> Integer,
+    items (id) {
+        id -> Integer,
+        item_id -> Varchar,
         name -> Varchar,
+        picture -> Nullable<Varchar>,
         price -> Integer,
         stock -> Integer,
         owner -> Varchar,
