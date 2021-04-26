@@ -1,4 +1,7 @@
-use crate::{actions, models::Item};
+use crate::{
+    actions,
+    models::{Item, NewItem},
+};
 use rocket::http::Status;
 use rocket_contrib::json::Json;
 
@@ -41,3 +44,27 @@ pub fn get_item_by_id(db: crate::Database, item_id: i32) -> Result<Json<Item>, S
         Err(format!("Item with an ID of '{}' does not exist", item_id))
     }
 }
+
+#[post("/add_item", format = "application/json", data = "<item>")]
+pub fn add_item(db: crate::Database, item: NewItem) -> Result<Json<bool>, String> {
+    let result = actions::add_item(&*db, item.clone()).map_err(|e| {
+        error!("{}", e);
+        Status::InternalServerError.to_string()
+    })?;
+
+    if let Some(result) = result {
+        if result == 0 {
+            info!("add_item item with ({:?}) not added", item);
+            return Err(format!("add_item item with ({:?}) not added", item));
+        }
+
+        info!("add_item {} row(s) changed", result);
+        Ok(Json(true))
+    } else {
+        info!("add_item item with ({:?}) not added", item);
+        Err(format!("add_item item with ({:?}) not added", item))
+    }
+}
+
+// #[delete("/remove_item", format = "application/json", data = "<item>")]
+// pub fn remove_item(db: crate::Database, item: Item) {}

@@ -1,4 +1,4 @@
-use crate::models::Item;
+use crate::models::{Item, NewItem};
 use rocket_contrib::databases::diesel::prelude::*;
 
 pub fn get_all_items(
@@ -30,7 +30,7 @@ pub fn get_item_by_id(
 
 pub fn add_item(
     connection: &MysqlConnection,
-    item: Item,
+    item: NewItem,
 ) -> Result<Option<usize>, diesel::result::Error> {
     use crate::schema::items::dsl::*;
 
