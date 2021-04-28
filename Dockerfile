@@ -11,6 +11,7 @@ RUN cargo +nightly install --path .
 FROM debian:buster-slim
 COPY --from=builder /usr/local/cargo/bin/market-api /usr/local/bin/market-api
 RUN apt update -y
+RUN apt upgrade -y
 RUN apt install libmariadb3 -y
 WORKDIR /usr/src/market-api
 COPY ."env" .
