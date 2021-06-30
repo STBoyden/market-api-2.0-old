@@ -37,7 +37,7 @@ Reverse of `AddTradeListing`
 
 For buyers to actually buy from a trade listing
 
-### Other cool stuff
+## Other cool stuff
 
 - Recording average pricePerItem for new players to get a rough idea of price: maybe even fancy normal distribution graphs from this data
-- 
+- Allow sellers to sell shares of their business to people - for startup money (economics)
