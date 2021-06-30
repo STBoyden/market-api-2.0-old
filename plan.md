@@ -40,4 +40,6 @@ For buyers to actually buy from a trade listing
 ## Other cool stuff
 
 - Recording average pricePerItem for new players to get a rough idea of price: maybe even fancy normal distribution graphs from this data
-- Allow sellers to sell shares of their business to people - for startup money (economics)
+- Allow sellers to sell shares of their business to people - for startup money 
+- Rating system for buyers/sellers to show their integrity
+- Loans (possibly should be in the bank? But the bank is more a centralised system which doesn't apply too well, right? The bank reserve is for initial currency population, it has no money for giving out loans)
